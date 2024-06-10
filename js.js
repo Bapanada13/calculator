@@ -1,3 +1,4 @@
+// Arithmetic functions using parseFloat to ensure numbers are handled correctly
 function add(a, b) {
   return parseFloat(a) + parseFloat(b);
 }
@@ -24,21 +25,22 @@ function operate(operator, num1, num2) {
 
 function calculateAndDisplay() {
   let result = operate(operator, storedValue, display.textContent);
+  displayResult(result);
+  storedValue = result;
+}
+
+function displayResult(result) {
   if (isNaN(result) || result === Infinity || result === -Infinity) {
     display.textContent = result;
-  }
-  else if (getNumberOfIntegerDigits(result) >= 12) {
+  } else if (getNumberOfIntegerDigits(result) >= 12) {
     let tmpArr = result.toExponential().toString().split("e");
-    display.textContent = tmpArr[0].slice(0,8) + "e" + tmpArr[1];
-  }
-  else if (getNumberOfDecimalDigits(result) >= 12) {
+    display.textContent = tmpArr[0].slice(0, 8) + "e" + tmpArr[1];
+  } else if (getNumberOfDecimalDigits(result) >= 12) {
     let tmpArr = result.toExponential().toString().split("e");
-    display.textContent = tmpArr[0].slice(0,8) + "e" + tmpArr[1];
-  }
-  else {
+    display.textContent = tmpArr[0].slice(0, 8) + "e" + tmpArr[1];
+  } else {
     display.textContent = result.toString().slice(0, 12);
   }
-  storedValue = result;
 }
 
 function getNumberOfIntegerDigits(num) {
@@ -58,16 +60,19 @@ function buttonPress(val) {
     selectingOperator = false;
     display.textContent = "";
   }
-  if ((display.textContent.charAt(0) === "-" && display.textContent.length <= 12) || 
-  (display.textContent.charAt(0) !== "-" && display.textContent.length <= 11)) {
-  display.textContent += val;
+  if ((display.textContent.charAt(0) === "-" && display.textContent.length <= 12) ||
+    (display.textContent.charAt(0) !== "-" && display.textContent.length <= 11)) {
+    display.textContent += val;
   }
 }
 
 // Adding event listeners to buttons
 for (let i = 0; i <= 9; i++) {
   const button = document.querySelector(`#n${i}`);
-  button.addEventListener("click", () => buttonPress(i));
+  button.addEventListener("click", () => {
+    buttonPress(i);
+    button.blur(); // Remove focus from the button after it is clicked
+  });
 }
 
 // Adding event listener for keydown event
@@ -76,12 +81,12 @@ window.addEventListener("keydown", (e) => {
   if (key >= '0' && key <= '9') {
     buttonPress(key);
   } else {
-    handleOperatorKeys(key);
+    handleOperatorKeys(key, e);
   }
 });
 
 // Function to handle operator and special keys
-function handleOperatorKeys(key) {
+function handleOperatorKeys(key, event) {
   switch (key) {
     case 'c':
       clearDisplay();
@@ -93,6 +98,9 @@ function handleOperatorKeys(key) {
       handlePercentage();
       break;
     case '/':
+      event.preventDefault(); // Prevent quick find in Firefox
+      handleOperator(key);
+      break;
     case '*':
     case '-':
     case '+':
@@ -149,7 +157,7 @@ function addDecimal() {
   if (display.textContent !== "NaN" && display.textContent !== "Infinity" && display.textContent !== "-Infinity") {
     if (!display.textContent.includes(".")) {
       if ((display.textContent.charAt(0) === "-" && display.textContent.length <= 12) ||
-      display.textContent.length <= 11) {
+        display.textContent.length <= 11) {
         display.textContent += ".";
       }
     }
@@ -170,16 +178,22 @@ function handleOperator(op) {
 }
 
 function handlePercentage() {
-  switch (operator) {
-    case '+':
-    case '-':
-      display.textContent = storedValue * display.textContent / 100;
-      break;
-    case '*':
-    case '/':
-      display.textContent /= 100;
-      break;
+  let result;
+  if (operator) {
+    switch (operator) {
+      case '+':
+      case '-':
+        result = storedValue * display.textContent / 100;
+        break;
+      case '*':
+      case '/':
+        result = display.textContent / 100;
+        break;
+    }
+  } else {
+    result = 0;  // When no operator is selected
   }
+  displayResult(result);
 }
 
 function handleEquals() {
@@ -190,17 +204,36 @@ function handleEquals() {
 }
 
 // Attach event listeners to other buttons
-document.querySelector("#clear").addEventListener("click", clearDisplay);
-document.querySelector("#del").addEventListener("click", deleteLastDigit);
-document.querySelector("#negate").addEventListener("click", toggleNegate);
-document.querySelector("#dot").addEventListener("click", addDecimal);
+document.querySelector("#clear").addEventListener("click", () => {
+  clearDisplay();
+  document.querySelector("#clear").blur(); // Remove focus from the button after it is clicked
+});
+document.querySelector("#del").addEventListener("click", () => {
+  deleteLastDigit();
+  document.querySelector("#del").blur(); // Remove focus from the button after it is clicked
+});
+document.querySelector("#negate").addEventListener("click", () => {
+  toggleNegate();
+  document.querySelector("#negate").blur(); // Remove focus from the button after it is clicked
+});
+document.querySelector("#dot").addEventListener("click", () => {
+  addDecimal();
+  document.querySelector("#dot").blur(); // Remove focus from the button after it is clicked
+});
 document.querySelectorAll(".op").forEach((button) => {
   button.addEventListener("click", (e) => {
     handleOperator(e.target.textContent);
+    button.blur(); // Remove focus from the button after it is clicked
   });
 });
-document.querySelector("#per").addEventListener("click", handlePercentage);
-document.querySelector("#equals").addEventListener("click", handleEquals);
+document.querySelector("#per").addEventListener("click", () => {
+  handlePercentage();
+  document.querySelector("#per").blur(); // Remove focus from the button after it is clicked
+});
+document.querySelector("#equals").addEventListener("click", () => {
+  handleEquals();
+  document.querySelector("#equals").blur(); // Remove focus from the button after it is clicked
+});
 
 const display = document.querySelector(".display");
 let storedValue = NaN, operator = null, selectingOperator = false;

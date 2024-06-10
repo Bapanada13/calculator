@@ -72,3 +72,7 @@ h1 {
 .op {
   background-color: lightblue;
 }
+
+.cButton:focus {
+  outline: none;
+}
